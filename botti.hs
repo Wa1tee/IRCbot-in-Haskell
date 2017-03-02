@@ -18,6 +18,7 @@ main = do
     write h "NICK" nick
     write h "USER" (nick++" 0 * :Bot by Waitee")
     write h "JOIN" chan
+    write h "PRIVMSG" (chan ++ " :ei juku :D")
     listen h
 
 write :: Handle -> String -> String -> IO ()
@@ -30,7 +31,6 @@ listen h = forever $ do
     t <- hGetLine h
     let s = init t
     if ping s then pong s else eval h (clean s)
-    write h "PRIVMSG" (chan ++ " :ei juku :D")
     putStrLn s
   where
     forever a = a >> forever a
@@ -49,3 +49,5 @@ eval _   _                      = return ()
 
 privmsg :: Handle -> String -> IO ()
 privmsg h s = write h "PRIVMSG" (chan ++ " :" ++ s)
+
+
