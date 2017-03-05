@@ -1,10 +1,13 @@
 --IRC-bot by Antti "Waitee" Auranen
 --1.3.2017
+import Data.List
 import Network
 import System.IO
-import Text.Printf
-import Data.List
 import System.Exit
+import Control.Arrow
+import Control.Monad.Reader
+import Control.Exception
+import Text.Printf
 
 
 server   = "irc.cc.tut.fi"
@@ -12,42 +15,59 @@ port     = 6667
 chan     = "#vessadeeku"
 nick     = "deekubot"
 
-main = do
+data Bot = Bot {socket :: Handle}
+type Net = ReaderT Bot IO
+
+main :: IO ()
+main = bracket connect disconnect loop
+  where
+      disconnect = hClose . socket
+      loop st    = runReaderT run st
+
+connect :: IO Bot
+connect = notify $ do
     h <- connectTo server (PortNumber (fromIntegral port))
     hSetBuffering h NoBuffering
+    return (Bot h)
+  where  
+    notify a = bracket_
+        (printf "Connecting to %s ... " server >> hFlush stdout)
+        (putStrLn "done.")
+        a
+run :: Net ()
+run = do
     write h "NICK" nick
     write h "USER" (nick++" 0 * :Bot by Waitee")
     write h "JOIN" chan
     write h "PRIVMSG" (chan ++ " :ei juku :D")
-    listen h
+    asks socket >>= listen
 
-write :: Handle -> String -> String -> IO ()
-write h s t = do
-    hPrintf h "%s %s\r\n" s t
-    printf    "> %s %s\n" s t
+write :: String -> String -> Net ()
+write s t = do
+    h <- asks socket
+    io $ hPrintf h "%s %s\r\n" s t
+    io $ printf    "> %s %s\n" s t
 
-listen :: Handle -> IO ()
+listen :: Handle -> Net ()
 listen h = forever $ do
-    t <- hGetLine h
-    let s = init t
+    s <- init `fmap` io (hGetLine h)
+    io (putStrLn s)
     if ping s then pong s else eval h (clean s)
-    putStrLn s
   where
     forever a = a >> forever a
-    
-    --cleans the first : of the IRC protocol messages
     clean     = drop 1 . dropWhile (/= ':') . drop 1
-    
-    
     ping x    = "PING :" `isPrefixOf` x
     pong x    = write h "PONG" (':' : drop 6 x)
 
-eval :: Handle -> String -> IO ()
-eval h      "!quit"             = write h "QUIT" ":Exiting" >> exitWith ExitSuccess
-eval h x |"!id " `isPrefixOf` x = privmsg h (drop 4 x)
-eval _   _                      = return ()
+eval :: String -> Net ()
+eval h      "!quit"                 = write h "QUIT" ":Exiting" >> exitWith ExitSuccess
+eval h x |  "!id " `isPrefixOf` x   = privmsg h (drop 4 x)
+eval h      "!vim"                      = privmsg h "kovipu: graafiset editorit on n00beille :D" 
+--eval h x 
+eval _   _                        = return ()
 
-privmsg :: Handle -> String -> IO ()
+privmsg :: String -> Net ()
 privmsg h s = write h "PRIVMSG" (chan ++ " :" ++ s)
 
-
+io :: IO a -> Net a
+io = liftIO
