@@ -15,7 +15,7 @@ port     = 6667
 chan     = "#vessadeeku"
 nick     = "deekubot"
 
-data Bot = Bot {socket :: Handle}
+data Bot = Bot { socket :: Handle }
 type Net = ReaderT Bot IO
 
 main :: IO ()
@@ -36,10 +36,10 @@ connect = notify $ do
         a
 run :: Net ()
 run = do
-    write h "NICK" nick
-    write h "USER" (nick++" 0 * :Bot by Waitee")
-    write h "JOIN" chan
-    write h "PRIVMSG" (chan ++ " :ei juku :D")
+    write "NICK" nick
+    write "USER" (nick++" 0 * :Bot by Waitee")
+    write "JOIN" chan
+    write "PRIVMSG" (chan ++ " :ei juku :D")
     asks socket >>= listen
 
 write :: String -> String -> Net ()
@@ -52,22 +52,22 @@ listen :: Handle -> Net ()
 listen h = forever $ do
     s <- init `fmap` io (hGetLine h)
     io (putStrLn s)
-    if ping s then pong s else eval h (clean s)
+    if ping s then pong s else eval (clean s)
   where
     forever a = a >> forever a
     clean     = drop 1 . dropWhile (/= ':') . drop 1
     ping x    = "PING :" `isPrefixOf` x
-    pong x    = write h "PONG" (':' : drop 6 x)
+    pong x    = write "PONG" (':' : drop 6 x)
 
 eval :: String -> Net ()
-eval h      "!quit"                 = write h "QUIT" ":Exiting" >> exitWith ExitSuccess
-eval h x |  "!id " `isPrefixOf` x   = privmsg h (drop 4 x)
-eval h      "!vim"                      = privmsg h "kovipu: graafiset editorit on n00beille :D" 
+eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
+eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
+eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
 --eval h x 
-eval _   _                        = return ()
+eval       _                       = return ()
 
 privmsg :: String -> Net ()
-privmsg h s = write h "PRIVMSG" (chan ++ " :" ++ s)
+privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
 
 io :: IO a -> Net a
 io = liftIO
