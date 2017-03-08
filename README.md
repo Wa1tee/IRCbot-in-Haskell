@@ -1,5 +1,5 @@
 # IRCbot-in-Haskell
-Run using runhaskell botti.hs
+Run by using runhaskell botti.hs
 
 So far knows the commands: 
 !quit -> closes connection and quits the program
