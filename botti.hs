@@ -63,8 +63,8 @@ eval :: String -> Net ()
 --eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
 eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
 eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
-eval x y | "!sum " `isPrefixOf` x  = privmsg (sum (drop 1 (split x " ")))
 --eval h x 
+--eval x |   "!sum " `isPrefixOf` x  = privmsg (sum (tail(split x " ")))
 eval       _                       = return ()
 
 privmsg :: String -> Net ()
@@ -73,12 +73,8 @@ privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
 io :: IO a -> Net a
 io = liftIO
 
-split :: Eq a => a -> [a] -> [[a]]
-split d [] = []
-split d s = x : split d (drop 1 y) where (x,y) = span (/= d) s
+--split :: Eq a => a -> [a] -> [[a]]
+--split d [] = []
+--split d s = x : split d (drop 1 y) where (x,y) = span (/= d) s
 
-sum :: [String] -> Int
-sum d [] = 0
---TAA ON KESKEN!!!
-sum d s  = 
 
