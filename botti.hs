@@ -4,6 +4,7 @@ import Data.List
 import Network
 import System.IO
 import System.Exit
+import System.Time
 import Control.Arrow
 import Control.Monad.Reader
 import Control.Exception
@@ -15,7 +16,8 @@ port     = 6667
 chan     = "#vessadeeku"
 nick     = "deekubot"
 
-data Bot = Bot { socket :: Handle }
+data Bot = Bot { socket :: Handle, starttime :: ClockTime }
+
 type Net = ReaderT Bot IO
 
 main :: IO ()
@@ -26,9 +28,10 @@ main = bracket connect disconnect loop
 
 connect :: IO Bot
 connect = notify $ do
+    t <- getClockTime
     h <- connectTo server (PortNumber (fromIntegral port))
     hSetBuffering h NoBuffering
-    return (Bot h)
+    return (Bot h t)
   where  
     notify a = bracket_
         (printf "Connecting to %s ... " server >> hFlush stdout)
@@ -58,12 +61,13 @@ listen h = forever $ do
     clean     = drop 1 . dropWhile (/= ':') . drop 1
     ping x    = "PING :" `isPrefixOf` x
     pong x    = write "PONG" (':' : drop 6 x)
+    master x  = ":Waitee!waitee@kapsi.fi"
 
 eval :: String -> Net ()
 --eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
 eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
 eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
---eval h x 
+eval       "!uptime"               = uptime >>= privmsg
 --eval x |   "!sum " `isPrefixOf` x  = privmsg (sum (tail(split x " ")))
 eval       _                       = return ()
 
@@ -73,8 +77,23 @@ privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
 io :: IO a -> Net a
 io = liftIO
 
---split :: Eq a => a -> [a] -> [[a]]
---split d [] = []
---split d s = x : split d (drop 1 y) where (x,y) = span (/= d) s
+split :: Eq a => a -> [a] -> [[a]]
+split d [] = []
+split d s = x : split d (drop 1 y) where (x,y) = span (/= d) s
 
+uptime :: Net String
+uptime = do
+  now  <- io getClockTime
+  zero <- asks starttime
+  return . pretty $ diffClockTimes now zero
+
+pretty :: TimeDiff -> String
+pretty td = 
+  unwords $ map (uncurry (++) . first show) $
+    if null diffs then [(0,"s")] else diffs
+      where merge (tot, acc) (sec, typ) = let (sec', tot') = divMod tot sec
+                                           in (tot',(sec',typ):acc)
+            metrics = [(86400,"d"),(3600,"h"),(60,"m"),(1,"s")]
+            diffs = filter ((/= 0) . fst) $ reverse $ snd $
+                    foldl' merge (tdSec td, []) metrics
 
