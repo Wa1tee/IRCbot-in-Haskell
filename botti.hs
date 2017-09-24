@@ -9,7 +9,7 @@ import Control.Arrow
 import Control.Monad.Reader
 import Control.Exception
 import Text.Printf
-
+import Data.List.Split
 
 server   = "irc.cc.tut.fi"
 port     = 6667
@@ -17,7 +17,6 @@ chan     = "#vessadeeku"
 nick     = "deekubot"
 
 data Bot = Bot { socket :: Handle, starttime :: ClockTime }
-
 type Net = ReaderT Bot IO
 
 main :: IO ()
@@ -64,12 +63,14 @@ listen h = forever $ do
     master x  = ":Waitee!waitee@kapsi.fi"
 
 eval :: String -> Net ()
---eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
+eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
 eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
 eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
 eval       "!uptime"               = uptime >>= privmsg
---eval x |   "!sum " `isPrefixOf` x  = privmsg (sum (tail(split x " ")))
-eval       _                       = return ()
+eval x |   "!sum " `isPrefixOf` x  = if (readNumbers(drop 5 x) ) == [] 
+                                        then privmsg "Try: !sum Int Int"
+                                        else privmsg (show(summaa(readNumbers(drop 5 x))))
+eval _                             = return ()
 
 privmsg :: String -> Net ()
 privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
@@ -77,16 +78,13 @@ privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
 io :: IO a -> Net a
 io = liftIO
 
-split :: Eq a => a -> [a] -> [[a]]
-split d [] = []
-split d s = x : split d (drop 1 y) where (x,y) = span (/= d) s
-
 uptime :: Net String
 uptime = do
   now  <- io getClockTime
   zero <- asks starttime
   return . pretty $ diffClockTimes now zero
 
+--returns (up)time in a prettier format
 pretty :: TimeDiff -> String
 pretty td = 
   unwords $ map (uncurry (++) . first show) $
@@ -97,3 +95,10 @@ pretty td =
             diffs = filter ((/= 0) . fst) $ reverse $ snd $
                     foldl' merge (tdSec td, []) metrics
 
+--under construction
+
+summaa :: [Int] -> Int
+summaa = \x -> sum x
+
+readNumbers :: String -> [Int]
+readNumbers = map read . words
