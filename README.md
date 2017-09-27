@@ -10,3 +10,5 @@ So far knows the commands:
 !vim -> tells user Kovipu that he needs to stop using graphic editors
 
 !sum Int Int -> takes one or more Integers as an argument and returns their sum.
+
+!uptime -> returns the bot uptime in a neat format
