@@ -2,7 +2,7 @@
 --1.3.2017
 import Data.List
 import Network
-import System.IO
+import System.IO 
 import System.Exit
 import System.Time
 import Control.Arrow
@@ -10,12 +10,15 @@ import Control.Monad.Reader
 import Control.Exception
 import Text.Printf
 import Data.List.Split
+import Data.Either
+import Text.Read
 
 server   = "irc.cc.tut.fi"
 port     = 6667
 chan     = "#vessadeeku"
 nick     = "deekubot"
 
+data Either a b = String Int
 data Bot = Bot { socket :: Handle, starttime :: ClockTime }
 type Net = ReaderT Bot IO
 
@@ -67,9 +70,9 @@ eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith Exi
 eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
 eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
 eval       "!uptime"               = uptime >>= privmsg
-eval x |   "!sum " `isPrefixOf` x  = if (readNumbers(drop 5 x) ) == [] 
-                                        then privmsg "Try: !sum Int Int"
-                                        else privmsg (show(summaa(readNumbers(drop 5 x))))
+eval x |   "!sum " `isPrefixOf` x  = if summaa (drop 5 x) == Nothing
+                                        then privmsg "Parse error"
+                                        else privmsg $ drop 5 $ show $ summaa $ drop 5 x
 eval _                             = return ()
 
 privmsg :: String -> Net ()
@@ -89,16 +92,18 @@ pretty :: TimeDiff -> String
 pretty td = 
   unwords $ map (uncurry (++) . first show) $
     if null diffs then [(0,"s")] else diffs
-      where merge (tot, acc) (sec, typ) = let (sec', tot') = divMod tot sec
+      where 
+        merge (tot, acc) (sec, typ) = let (sec', tot') = divMod tot sec
                                            in (tot',(sec',typ):acc)
-            metrics = [(86400,"d"),(3600,"h"),(60,"m"),(1,"s")]
-            diffs = filter ((/= 0) . fst) $ reverse $ snd $
+        metrics = [(86400,"d"),(3600,"h"),(60,"m"),(1,"s")]
+        diffs = filter ((/= 0) . fst) $ reverse $ snd $
                     foldl' merge (tdSec td, []) metrics
 
---under construction
 
-summaa :: [Int] -> Int
-summaa = \x -> sum x
+summaa :: String -> Maybe Int 
+summaa x = fmap sum $ sequence $ readNumbers x
+  
 
-readNumbers :: String -> [Int]
-readNumbers = map read . words
+readNumbers :: String -> [Maybe Int]
+readNumbers x = map readMaybe $ words x :: [Maybe Int]
+
