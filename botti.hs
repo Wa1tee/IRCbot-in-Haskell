@@ -2,7 +2,7 @@
 --1.3.2017
 import Data.List
 import Network
-import System.IO 
+import System.IO
 import System.Exit
 import System.Time
 import Control.Arrow
@@ -44,7 +44,7 @@ run = do
     write "NICK" nick
     write "USER" (nick++" 0 * :Bot by Waitee")
     write "JOIN" chan
-    write "PRIVMSG" (chan ++ " :ei juku :D")
+    write "PRIVMSG" (chan ++ " :JEA BOIIIII")
     asks socket >>= listen
 
 write :: String -> String -> Net ()
@@ -89,10 +89,10 @@ uptime = do
 
 --returns (up)time in a prettier format
 pretty :: TimeDiff -> String
-pretty td = 
+pretty td =
   unwords $ map (uncurry (++) . first show) $
     if null diffs then [(0,"s")] else diffs
-      where 
+      where
         merge (tot, acc) (sec, typ) = let (sec', tot') = divMod tot sec
                                            in (tot',(sec',typ):acc)
         metrics = [(86400,"d"),(3600,"h"),(60,"m"),(1,"s")]
@@ -100,9 +100,8 @@ pretty td =
                     foldl' merge (tdSec td, []) metrics
 
 
-summaa :: String -> Maybe Int 
+summaa :: String -> Maybe Int
 summaa x = fmap sum $ sequence $ readNumbers x
-  
 
 readNumbers :: String -> [Maybe Int]
 readNumbers x = map readMaybe $ words x :: [Maybe Int]
