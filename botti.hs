@@ -8,7 +8,7 @@ import Data.List.Split
 import Data.Either
 import Network
 import Network.HTTP.Browser
-import Servant.Common.Req       (Req, addHeader)
+--import Servant.Common.Req       (Req, addHeader)
 import System.IO
 import System.Exit
 import System.Time
@@ -65,7 +65,7 @@ listen h = forever $ do
     io (putStrLn s)
 
     --send stuff to info-screen
-    infoSend (putStrLn s)
+    infoSend s
     if ping s then pong s else eval (clean s)
   where
     forever a = a >> forever a
@@ -78,6 +78,7 @@ eval :: String -> Net ()
 eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
 eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
 eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
+eval       "!help"                 = helpSend
 eval       "!uptime"               = uptime >>= privmsg
 eval x |   "!sum " `isPrefixOf` x  = if summaa (drop 5 x) == Nothing
                                         then privmsg "Parse error"
@@ -89,7 +90,7 @@ privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
 
 io :: IO a -> Net a
 io = liftIO
-
+   
 uptime :: Net String
 uptime = do
   now  <- io getClockTime
@@ -126,3 +127,11 @@ infoSend s =
         (fromJust $ parseURI "urli tähä :D")
         [(s)]
 
+--Experimental
+helpSend :: Net ()
+helpSend = do { 
+  privmsg "!id     -- Echo function";
+  privmsg "!help   -- Help thing";
+  privmsg "!uptime -- Displays bot uptime";
+  privmsg "!sum    -- Returns a sum of one or more integers" ;
+  }
