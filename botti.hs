@@ -53,6 +53,9 @@ run = do
     write "PRIVMSG" (chan ++ " :JEA BOIIIII")
     asks socket >>= listen
 
+io :: IO a -> Net a
+io = liftIO
+   
 write :: String -> String -> Net ()
 write s t = do
     h <- asks socket
@@ -74,6 +77,9 @@ listen h = forever $ do
     pong x    = write "PONG" (':' : drop 6 x)
     master x  = ":Waitee!waitee@kapsi.fi"
 
+privmsg :: String -> Net ()
+privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
+
 eval :: String -> Net ()
 eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
 eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
@@ -85,12 +91,6 @@ eval x |   "!sum " `isPrefixOf` x  = if summaa (drop 5 x) == Nothing
                                         else privmsg $ drop 5 $ show $ summaa $ drop 5 x
 eval _                             = return ()
 
-privmsg :: String -> Net ()
-privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
-
-io :: IO a -> Net a
-io = liftIO
-   
 uptime :: Net String
 uptime = do
   now  <- io getClockTime
@@ -109,7 +109,7 @@ pretty td =
         diffs = filter ((/= 0) . fst) $ reverse $ snd $
                     foldl' merge (tdSec td, []) metrics
 
-
+-- TODO: Fix the arranging here so that summaa works for any [Maybe Int]
 summaa :: String -> Maybe Int
 summaa x = fmap sum $ sequence $ readNumbers x
 
