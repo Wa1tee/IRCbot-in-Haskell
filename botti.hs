@@ -1,26 +1,32 @@
 --IRC-bot by Antti "Waitee" Auranen
 --1.3.2017
-import Data.List
-import Network
-import System.IO
-import System.Exit
-import System.Time
 import Control.Arrow
 import Control.Monad.Reader
 import Control.Exception
-import Text.Printf
+import Data.List
 import Data.List.Split
 import Data.Either
+import Network
+import Network.HTTP.Browser
+import Servant.Common.Req       (Req, addHeader)
+import System.IO
+import System.Exit
+import System.Time
+import Text.Printf
 import Text.Read
+
 
 server   = "irc.cc.tut.fi"
 port     = 6667
-chan     = "#vessadeeku"
-nick     = "deekubot"
+chan     = "#digitfuksit"
+nick     = "infobot"
+
 
 data Either a b = String Int
 data Bot = Bot { socket :: Handle, starttime :: ClockTime }
+
 type Net = ReaderT Bot IO
+
 
 main :: IO ()
 main = bracket connect disconnect loop
@@ -57,6 +63,9 @@ listen :: Handle -> Net ()
 listen h = forever $ do
     s <- init `fmap` io (hGetLine h)
     io (putStrLn s)
+
+    --send stuff to info-screen
+    infoSend (putStrLn s)
     if ping s then pong s else eval (clean s)
   where
     forever a = a >> forever a
@@ -105,4 +114,15 @@ summaa x = fmap sum $ sequence $ readNumbers x
 
 readNumbers :: String -> [Maybe Int]
 readNumbers x = map readMaybe $ words x :: [Maybe Int]
+
+--experimental
+
+infoSend s = 
+  browse $ do
+    setAuthorityGen (\_ _ -> return $ Just ("username", "password"))
+    formToRequest $
+      Form
+        POST
+        (fromJust $ parseURI "urli tähä :D")
+        [(s)]
 
