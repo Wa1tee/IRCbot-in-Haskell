@@ -1,5 +1,7 @@
 --IRC-bot by Antti "Waitee" Auranen
 --1.3.2017
+--Based on https://wiki.haskell.org/Roll_your_own_IRC_bot
+
 import Control.Arrow
 import Control.Monad.Reader
 import Control.Exception
@@ -68,9 +70,8 @@ listen :: Handle -> Net ()
 listen h = forever $ do
     s <- init `fmap` io (hGetLine h)
     io (putStrLn s)
-    --send stuff to info-screen
-    infoSend s
     if ping s then pong s else eval (clean s)
+    --send stuff to info-screen
     io(infoSend s)
   where
     forever a = a >> forever a
@@ -93,6 +94,7 @@ eval x |   "!sum " `isPrefixOf` x  = if summaa (drop 5 x) == Nothing
                                         else privmsg $ drop 5 $ show $ summaa $ drop 5 x
 eval _                             = return ()
 
+--returns uptime
 uptime :: Net String
 uptime = do
   now  <- io getClockTime
@@ -119,13 +121,13 @@ readNumbers :: String -> [Maybe Int]
 readNumbers x = map readMaybe $ words x :: [Maybe Int]
 
 
-
+--Sends lines via HTTP POST
 infoSend s = 
   browse $ 
     request $ postRequestWithBody "user:passwd@url" "text" s
     
 
-
+--Displays available commands on irc
 helpSend :: Net ()
 helpSend = do { 
   privmsg "!id     -- Echo function";
