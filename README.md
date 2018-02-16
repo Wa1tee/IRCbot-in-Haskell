@@ -1,5 +1,5 @@
 # IRCbot-in-Haskell
-Run by using runhaskell botti.hs
+Run by using runhaskell botti.hs or compile with GHC
 
 So far knows the commands: 
 
