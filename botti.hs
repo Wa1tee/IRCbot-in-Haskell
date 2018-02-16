@@ -6,9 +6,11 @@ import Control.Exception
 import Data.List
 import Data.List.Split
 import Data.Either
+import Data.Maybe
 import Network
-import Network.HTTP.Browser
---import Servant.Common.Req       (Req, addHeader)
+import Network.Browser
+import Network.HTTP
+import Network.URI
 import System.IO
 import System.Exit
 import System.Time
@@ -16,9 +18,9 @@ import Text.Printf
 import Text.Read
 
 
-server   = "irc.cc.tut.fi"
+server   = "uk.ircnet.org"
 port     = 6667
-chan     = "#digitfuksit"
+chan     = "#asteriski.ry"
 nick     = "infobot"
 
 
@@ -66,10 +68,10 @@ listen :: Handle -> Net ()
 listen h = forever $ do
     s <- init `fmap` io (hGetLine h)
     io (putStrLn s)
-
     --send stuff to info-screen
     infoSend s
     if ping s then pong s else eval (clean s)
+    io(infoSend s)
   where
     forever a = a >> forever a
     clean     = drop 1 . dropWhile (/= ':') . drop 1
@@ -119,13 +121,9 @@ readNumbers x = map readMaybe $ words x :: [Maybe Int]
 --experimental
 
 infoSend s = 
-  browse $ do
-    setAuthorityGen (\_ _ -> return $ Just ("username", "password"))
-    formToRequest $
-      Form
-        POST
-        (fromJust $ parseURI "urli tähä :D")
-        [(s)]
+  browse $ 
+    request $ postRequestWithBody "http://waitee:jojogay69@174.138.10.1:6969/irc" "text" s
+    
 
 --Experimental
 helpSend :: Net ()
