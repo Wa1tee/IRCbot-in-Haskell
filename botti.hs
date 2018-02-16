@@ -18,10 +18,10 @@ import Text.Printf
 import Text.Read
 
 
-server   = "uk.ircnet.org"
-port     = 6667
-chan     = "#asteriski.ry"
-nick     = "infobot"
+server   = "url or ip"
+port     = 6667 --default for irc, may change
+chan     = "#channel"
+nick     = "nick"
 
 
 data Either a b = String Int
@@ -77,7 +77,7 @@ listen h = forever $ do
     clean     = drop 1 . dropWhile (/= ':') . drop 1
     ping x    = "PING :" `isPrefixOf` x
     pong x    = write "PONG" (':' : drop 6 x)
-    master x  = ":Waitee!waitee@kapsi.fi"
+    
 
 privmsg :: String -> Net ()
 privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
@@ -122,7 +122,7 @@ readNumbers x = map readMaybe $ words x :: [Maybe Int]
 
 infoSend s = 
   browse $ 
-    request $ postRequestWithBody "http://waitee:jojogay69@174.138.10.1:6969/irc" "text" s
+    request $ postRequestWithBody "user:passwd@url" "text" s
     
 
 --Experimental
