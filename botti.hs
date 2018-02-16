@@ -118,14 +118,14 @@ summaa x = fmap sum $ sequence $ readNumbers x
 readNumbers :: String -> [Maybe Int]
 readNumbers x = map readMaybe $ words x :: [Maybe Int]
 
---experimental
+
 
 infoSend s = 
   browse $ 
     request $ postRequestWithBody "user:passwd@url" "text" s
     
 
---Experimental
+
 helpSend :: Net ()
 helpSend = do { 
   privmsg "!id     -- Echo function";
