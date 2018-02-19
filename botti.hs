@@ -77,7 +77,7 @@ listen h = forever $ do
     io(infoSend s)
   where
     forever a = a >> forever a
-    clean     = drop 1 . dropWhile (/= ':') . drop 1
+    clean     = drop 1 . dropWhile (/= ':') . drop 1 --ipv6 hosts fail here :D
     ping x    = "PING :" `isPrefixOf` x
     pong x    = write "PONG" (':' : drop 6 x)
     
