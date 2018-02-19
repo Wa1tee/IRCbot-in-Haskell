@@ -77,16 +77,21 @@ listen h = forever $ do
     io(infoSend s)
   where
     forever a = a >> forever a
-    clean     = drop 1 . dropWhile (/= ':') . drop 1 --ipv6 hosts fail here :D
+    --clean     = drop 1 . dropWhile (/= ' ') . drop 1 . dropWhile (/= ':') . drop 1 --ipv6 hosts fail here :D
     ping x    = "PING :" `isPrefixOf` x
     pong x    = write "PONG" (':' : drop 6 x)
+
+clean :: String -> String
+clean = do
+  drop 1 . dropWhile(/= chan) 
+  drop 1 . dropWhile(/= ':') . drop 1
     
 
 privmsg :: String -> Net ()
 privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
 
 eval :: String -> Net ()
-eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
+-- eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
 eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
 eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
 eval       "!help"                 = helpSend
