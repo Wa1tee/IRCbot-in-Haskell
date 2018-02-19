@@ -21,7 +21,7 @@ import Text.Read
 
 
 server   = "url or ip"
-port     = 6667 --default for irc, may change
+port     = 6667 --usually the default for irc
 chan     = "#channel"
 nick     = "nick"
 
@@ -52,7 +52,7 @@ connect = notify $ do
 run :: Net ()
 run = do
     write "NICK" nick
-    write "USER" (nick++" 0 * :Bot by Waitee")
+    write "USER" (nick++" 0 * :http://born-hub.com")
     write "JOIN" chan
     write "PRIVMSG" (chan ++ " :JEA BOIIIII")
     asks socket >>= listen
@@ -65,6 +65,7 @@ write s t = do
     h <- asks socket
     io $ hPrintf h "%s %s\r\n" s t
     io $ printf    "> %s %s\n" s t
+    io $ infoSend(t)
 
 listen :: Handle -> Net ()
 listen h = forever $ do
@@ -122,6 +123,7 @@ readNumbers x = map readMaybe $ words x :: [Maybe Int]
 
 
 --Sends lines via HTTP POST
+infoSend :: String -> Net()
 infoSend s = 
   browse $ 
     request $ postRequestWithBody "user:passwd@url" "text" s
