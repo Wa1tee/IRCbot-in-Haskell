@@ -21,9 +21,10 @@ import Text.Read
 
 
 server   = "url or ip"
-port     = 6667 --usually the default for irc
+ircport     = 6667 --usually the default for irc
 chan     = "#channel"
 nick     = "nick"
+webAddress = "user:passwd@url"
 
 
 data Either a b = String Int
@@ -41,7 +42,7 @@ main = bracket connect disconnect loop
 connect :: IO Bot
 connect = notify $ do
     t <- getClockTime
-    h <- connectTo server (PortNumber (fromIntegral port))
+    h <- connectTo server (PortNumber (fromIntegral ircport))
     hSetBuffering h NoBuffering
     return (Bot h t)
   where  
@@ -52,7 +53,7 @@ connect = notify $ do
 run :: Net ()
 run = do
     write "NICK" nick
-    write "USER" (nick++" 0 * :http://born-hub.com")
+    write "USER" (nick++" 0 * :USER")
     write "JOIN" chan
     write "PRIVMSG" (chan ++ " :JEA BOIIIII")
     asks socket >>= listen
@@ -90,6 +91,7 @@ eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
 eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
 eval       "!help"                 = helpSend
 eval       "!uptime"               = uptime >>= privmsg
+eval       "!waitee"               = privmsg "hyvä jäbä :D"
 eval x |   "!sum " `isPrefixOf` x  = if summaa (drop 5 x) == Nothing
                                         then privmsg "Parse error"
                                         else privmsg $ drop 5 $ show $ summaa $ drop 5 x
@@ -123,10 +125,9 @@ readNumbers x = map readMaybe $ words x :: [Maybe Int]
 
 
 --Sends lines via HTTP POST
-infoSend :: String -> Net()
 infoSend s = 
   browse $ 
-    request $ postRequestWithBody "user:passwd@url" "text" s
+    request $ postRequestWithBody webAddress "text" s
     
 
 --Displays available commands on irc
