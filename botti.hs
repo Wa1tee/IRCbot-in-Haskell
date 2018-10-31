@@ -44,7 +44,7 @@ connect = notify $ do
     h <- connectTo server (PortNumber (fromIntegral port))
     hSetBuffering h NoBuffering
     return (Bot h t)
-  where  
+  where
     notify a = bracket_
         (printf "Connecting to %s ... " server >> hFlush stdout)
         (putStrLn "done.")
@@ -59,7 +59,7 @@ run = do
 
 io :: IO a -> Net a
 io = liftIO
-   
+
 write :: String -> String -> Net ()
 write s t = do
     h <- asks socket
@@ -78,7 +78,7 @@ listen h = forever $ do
     clean     = drop 1 . dropWhile (/= ':') . drop 1
     ping x    = "PING :" `isPrefixOf` x
     pong x    = write "PONG" (':' : drop 6 x)
-    
+
 
 privmsg :: String -> Net ()
 privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
@@ -86,7 +86,7 @@ privmsg s = write "PRIVMSG" (chan ++ " :" ++ s)
 eval :: String -> Net ()
 eval       "!quit"                 = write "QUIT" ":Exiting" >> io (exitWith ExitSuccess)
 eval x |   "!id " `isPrefixOf` x   = privmsg (drop 4 x)
-eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D" 
+eval       "!vim"                  = privmsg "kovipu: graafiset editorit on n00beille :D"
 eval       "!help"                 = helpSend
 eval       "!uptime"               = uptime >>= privmsg
 eval x |   "!sum " `isPrefixOf` x  = if summaa (drop 5 x) == Nothing
@@ -122,14 +122,14 @@ readNumbers x = map readMaybe $ words x :: [Maybe Int]
 
 
 --Sends lines via HTTP POST
-infoSend s = 
-  browse $ 
+infoSend s =
+  browse $
     request $ postRequestWithBody "user:passwd@url" "text" s
-    
+
 
 --Displays available commands on irc
 helpSend :: Net ()
-helpSend = do { 
+helpSend = do {
   privmsg "!id     -- Echo function";
   privmsg "!help   -- Help thing";
   privmsg "!uptime -- Displays bot uptime";
