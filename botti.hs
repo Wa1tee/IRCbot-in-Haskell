@@ -71,8 +71,7 @@ listen h = forever $ do
     s <- init `fmap` io (hGetLine h)
     io (putStrLn s)
     if ping s then pong s else eval (clean s)
-    --send stuff to info-screen
-    io(infoSend s)
+    
   where
     forever a = a >> forever a
     clean     = drop 1 . dropWhile (/= ':') . drop 1
@@ -92,7 +91,14 @@ eval       "!uptime"               = uptime >>= privmsg
 eval x |   "!sum " `isPrefixOf` x  = if summaa (drop 5 x) == Nothing
                                         then privmsg "Parse error"
                                         else privmsg $ drop 5 $ show $ summaa $ drop 5 x
+-- eval x |   "s/" `isPrefixOf` x     = replace x
 eval _                             = return ()
+
+--
+
+-- replace :: String -> Net ()
+-- replace = if 
+
 
 --returns uptime
 uptime :: Net String
@@ -119,13 +125,6 @@ summaa x = fmap sum $ sequence $ readNumbers x
 
 readNumbers :: String -> [Maybe Int]
 readNumbers x = map readMaybe $ words x :: [Maybe Int]
-
-
---Sends lines via HTTP POST
-infoSend s =
-  browse $
-    request $ postRequestWithBody "user:passwd@url" "text" s
-
 
 --Displays available commands on irc
 helpSend :: Net ()
